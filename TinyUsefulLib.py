@@ -339,7 +339,7 @@ def Graphs(t, X, x='x', y='y', full=False, save=False, filename=''):
 
     for n in range(np.shape(X)[0]):
         lbl = str(n)
-        plot = plt.plot(t, X[n], lw=1.5, label=lbl)
+        plot = plt.plot(t, X[n, :], lw=1.5, label=lbl)
 
     plt.legend(loc='center left', bbox_to_anchor=(1.01, 0.5))
 
