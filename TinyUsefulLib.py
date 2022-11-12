@@ -206,7 +206,7 @@ def OperInEigStates(eigVectors, gridSize=0, h=0, leftBorder=0):
     return (qNew, pNew)
 
 
-def Fluxonium(Ej, El, Ec, gridSize=100, numOfLvls=100, leftBorder=-20, rightBorder=20, F=0):
+def fluxonium(Ej, El, Ec, gridSize=100, numOfLvls=100, leftBorder=-20, rightBorder=20, F=0):
     # Ej, El и Ec - эффективные энергии на джоз. эл., индуктивности и емкости
 
     # h - шаг сетки
