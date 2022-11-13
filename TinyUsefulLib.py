@@ -134,7 +134,7 @@ def funcHeatmap(x, pos):
     return "{:.2f}".format(x).replace("0.", ".").replace("1.00", "1")
 
 
-def DuoBaStateRep(state, bSize, size):
+def StatesRepr(state, bSize, size):
     # генерим подписи осей, где oX – первый базис, а oY – второй
     oX = np.zeros(size)
     oY = np.zeros(size)
