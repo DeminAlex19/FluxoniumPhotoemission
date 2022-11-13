@@ -374,25 +374,26 @@ def Graphs(t, X, x='x', y='y', full=False, save=False, filename=''):
     plt.show()
 
 
-def PlotPcolormesh(fidelity, x, y, xlabel='x', ylabel='y', opt_lines=True,
-                   title=None, save=False, filename=''):
-    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
-
+def PlotPcolormesh(fidelity, x, y, xlabel = 'x', ylabel = 'y', opt_lines=True, 
+                    title=None, save=False, filename=''):
+    fig, axs = plt.subplots(nrows = 1, ncols = 1,figsize = (10, 10))
+    
     xGrid, yGrid = np.meshgrid(x, y)
     cmap_set = 'PiYG'
-    cb = axs.pcolormesh(xGrid, yGrid, np.transpose(fidelity[:, :]), cmap=cmap_set)
+    cb = axs.pcolormesh(xGrid, yGrid, np.transpose(fidelity[:, :]), cmap = cmap_set)
     axs.set_xlabel(xlabel)
     axs.set_ylabel(ylabel)
     fig.colorbar(cb, ax=axs)
 
-    opt_x_ind = np.argmax(np.real(fidelity)) // fidelity.shape[1]
-    opt_y_ind = np.argmax(np.real(fidelity)) % fidelity.shape[1]
-
-    axs.text(x[0], (1.5 * y[len(y) - 1] - 0.5 * y[len(y) - 2]) * 1.01,
+    opt_x_ind = np.argmax(np.real(fidelity))//fidelity.shape[1]
+    opt_y_ind = np.argmax(np.real(fidelity))%fidelity.shape[1]
+    
+    
+    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*1.05, 
              'opt ' + ylabel + ' = ' + str(y[opt_y_ind]) + ' with index ' + str(opt_y_ind))
-    axs.text(x[0], (1.5 * y[len(y) - 1] - 0.5 * y[len(y) - 2]) * 1.035,
+    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*1.3, 
              'opt ' + xlabel + ' = ' + str(x[opt_x_ind]) + ' with index ' + str(opt_x_ind))
-    axs.text(x[0], (1.5 * y[len(y) - 1] - 0.5 * y[len(y) - 2]) * 1.06,
+    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*1.55, 
              'max fidelity = ' + str(np.abs(fidelity[opt_x_ind, opt_y_ind])))
     if opt_lines:
         axs.hlines(y[opt_y_ind], x[0], x[-1])
@@ -400,8 +401,7 @@ def PlotPcolormesh(fidelity, x, y, xlabel='x', ylabel='y', opt_lines=True,
     if title != None:
         plt.title(title)
 
-    if (save):
-        plt.savefig(filename, facecolor='white')
-
+    if(save):
+        plt.savefig(filename, facecolor = 'white')    
+        
     plt.show()
-
