@@ -389,12 +389,13 @@ def PlotPcolormesh(fidelity, x, y, xlabel = 'x', ylabel = 'y', opt_lines=True,
     opt_y_ind = np.argmax(np.real(fidelity))%fidelity.shape[1]
     
     
-    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*1.05, 
+    axs.text(x[0], y[len(y)-1] + (y[len(y)-1] - y[0])*0.05, 
              'opt ' + ylabel + ' = ' + str(y[opt_y_ind]) + ' with index ' + str(opt_y_ind))
-    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*1.55, 
+    axs.text(x[0], y[len(y)-1] + (y[len(y)-1] - y[0])*0.08, 
              'opt ' + xlabel + ' = ' + str(x[opt_x_ind]) + ' with index ' + str(opt_x_ind))
-    axs.text(x[0], y[len(y)-1] + 0.5*(y[len(y)-1] - y[len(y)-2])*2.05, 
+    axs.text(x[0], y[len(y)-1] + (y[len(y)-1] - y[0])*0.11, 
              'max fidelity = ' + str(np.abs(fidelity[opt_x_ind, opt_y_ind])))
+    
     if opt_lines:
         axs.hlines(y[opt_y_ind], x[0], x[-1])
         axs.vlines(x[opt_x_ind], y[0], y[-1])
