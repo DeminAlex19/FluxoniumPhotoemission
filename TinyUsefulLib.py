@@ -11,6 +11,10 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import FuncFormatter
 
 
+def dagger(a):
+    return np.conjugate(a.transpose())
+
+
 def heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw=None, cbarlabel="", **kwargs):
     """
@@ -406,3 +410,44 @@ def PlotPcolormesh(fidelity, x, y, xlabel = 'x', ylabel = 'y', opt_lines=True,
         plt.savefig(filename, facecolor = 'white')    
         
     plt.show()
+
+
+def OperLin(A, B):
+    # при линеаризации матрицы Ro по стобцам в вектор ro преобразует A@Ro@B -> M@ro
+    size = A.shape[0]
+    M = np.zeros((size**2, size**2), dtype=complex) 
+    for a in range(size):
+        for b in range(size):
+            for c in range(size):
+                for d in range(size):
+                    M[a + b*size, d*size + c] += A[a, c]*B[d, b]
+                    
+    return M
+
+
+def PsiToRo(psi):
+    # принимает psi - столбец!
+    ro = psi@np.conjugate(psi.transpose())
+    
+    return ro
+
+
+def LindbladLin(H, L):
+    # возарвщвет эффективную матрицу M ур. Л. для лианеризованной по столбцам ro
+    # L – массив операторов Линдблада
+    size = H.shape[0]
+    M = np.zeros((size**2, size**2), dtype=complex)
+    
+    # единичная матрица
+    E = np.diag(np.linspace(1, 1, size))
+    
+    # бездиссипативная часть
+    M += -1j*(OperLin(H, E) + OperLin(E, H))
+    
+    # диссипативная часть
+    for n in range(L.shape[0]):
+        M += OperLin(L[n], dagger(L[n])) +\
+        1/2 * (OperLin(dagger(L[n])@L[n], E) +\
+               OperLin(E, dagger(L[n])@L[n]))
+        
+    return M
