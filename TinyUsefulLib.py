@@ -413,14 +413,14 @@ def PlotPcolormesh(fidelity, x, y, xlabel = 'x', ylabel = 'y', opt_lines=True,
 
 
 def OperLin(A, B):
-    # при линеаризации матрицы Ro по стобцам в вектор ro преобразует A@Ro@B -> M@ro
+    # при линеаризации матрицы Ro по строкам в вектор ro преобразует A@Ro@B -> M@ro
     size = A.shape[0]
     M = np.zeros((size**2, size**2), dtype=complex) 
     for a in range(size):
         for b in range(size):
             for c in range(size):
                 for d in range(size):
-                    M[a + b*size, d*size + c] += A[a, c]*B[d, b]
+                    M[a*size + b, d + c*size] += A[a, c]*B[d, b]
                     
     return M
 
