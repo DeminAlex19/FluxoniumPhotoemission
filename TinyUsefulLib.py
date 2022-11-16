@@ -287,52 +287,52 @@ def Transmon(Ej1, Ej2, Ec, gridSize=100, numOfLvls=100, F=0):
 def MixOfTwoSys(spect1, spect2, q1, q2, opers1=np.asarray([]), opers2=np.asarray([]), g=0, numOfLvls=5):
     # связываем две системы через операторы q1 и q2, попутно расширяя их операторы на общее пространство
     # opers – список из матриц операторов соотв. системы
-
+    
     size1 = spect1.size
     size2 = spect2.size
-
-    # единичная матрица
+    
+    # единичная матрица 
     E1 = np.diag(np.linspace(1, 1, size1))
     E2 = np.diag(np.linspace(1, 1, size2))
-
+    
     # диагонализованные гамильтонианы
     H1 = np.diag(spect1)
     H2 = np.diag(spect2)
-
+    
     # объединяем линейные пространства
     H1 = np.kron(H1, E2)
-    H2 = np.kron(E1, H2)
-
+    H2 = np.kron(E1, H2)    
+    
     # q в общем базисе
     q1 = np.kron(q1, E2)
     q2 = np.kron(E1, q2)
-
+    
     # полный гамильтониан
-    H = H1 + H2 + g * q1 @ q2
-
+    H = H1 + H2 + g * q1@q2
+                                   
     # диагонализация
     (eigEnergies, eigVectors) = eigsh(H, k=numOfLvls, which='SA', maxiter=4000)
-
-    order = np.argsort(np.real(eigEnergies))
-    eigEnergies = eigEnergies[order]
-    eigVectors = eigVectors[:, order]
-
+    
+    order=np.argsort(np.real(eigEnergies))
+    eigEnergies=eigEnergies[order]
+    eigVectors=eigVectors[:, order]
+    
     # перетягиваем операторы
-    if (opers1.shape[0] != 0):
-        newOpers1 = np.zeros((opers1.shape[0], size1 * size2, size1 * size2), dtype=complex)
+    if(opers1.shape[0] != 0):
+        newOpers1 = np.zeros((opers1.shape[0], size1*size2, size1*size2), dtype=complex)
         for i in range(opers1.shape[0]):
-            newOpers1[i] = np.kron(opers1, E2)
-
-    if (opers2.shape[0] != 0):
-        newOpers2 = np.zeros((opers2.shape[0], size1 * size2, size1 * size2), dtype=complex)
+            newOpers1[i, :, :] = np.kron(opers1[i, :, :], E2)
+    
+    if(opers2.shape[0] != 0):
+        newOpers2 = np.zeros((opers2.shape[0], size1*size2, size1*size2), dtype=complex)
         for i in range(opers2.shape[0]):
-            newOpers2[i] = np.kron(E1, opers2)
-
-    if (opers1.shape[0] != 0 and opers2.shape[0] != 0):
+            newOpers2[i, :, :] = np.kron(E1, opers2[i, :, :])
+    
+    if(opers1.shape[0] != 0 and opers2.shape[0] != 0):
         return (eigEnergies, eigVectors, H, newOpers1, newOpers2)
-    elif (opers1.shape[0] != 0):
+    elif(opers1.shape[0] != 0):
         return (eigEnergies, eigVectors, H, newOpers1)
-    elif (opers2.shape[0] != 0):
+    elif(opers2.shape[0] != 0):
         return (eigEnergies, eigVectors, H, newOpers2)
     else:
         return (eigEnergies, eigVectors, H)
