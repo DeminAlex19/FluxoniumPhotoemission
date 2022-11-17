@@ -432,8 +432,10 @@ def PsiToRo(psi):
     return ro
 
 
+
 def LindbladLin(H, L):
-    # возарвщвет эффективную матрицу M ур. Л. для лианеризованной по столбцам ro
+    # H – гамильтониан
+    # возарвщвет эффективную матрицу M ур. Л. для лианеризованной по строкам ro
     # L – массив операторов Линдблада
     size = H.shape[0]
     M = np.zeros((size**2, size**2), dtype=complex)
@@ -442,11 +444,11 @@ def LindbladLin(H, L):
     E = np.diag(np.linspace(1, 1, size))
     
     # бездиссипативная часть
-    M += -1j*(OperLin(H, E) + OperLin(E, H))
+    M += -1j*(OperLin(H, E) - OperLin(E, H))
     
     # диссипативная часть
     for n in range(L.shape[0]):
-        M += OperLin(L[n], dagger(L[n])) +\
+        M += OperLin(L[n], dagger(L[n])) -\
         1/2 * (OperLin(dagger(L[n])@L[n], E) +\
                OperLin(E, dagger(L[n])@L[n]))
         
