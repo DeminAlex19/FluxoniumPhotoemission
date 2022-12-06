@@ -1,6 +1,5 @@
 import tensorflow as tf
-git clone https://github.com/SimakovIlya/VirtualQubits
-from VirtualQubits import *
+import VirtualQubitSystem
 import tqdm
 from numpy import pi,linspace,tensordot
 import scipy.optimize
