@@ -1,8 +1,16 @@
+import tensorflow as tf
+!pip install ipython-autotime
+%load_ext autotime
+!git clone https://github.com/SimakovIlya/VirtualQubits
+from VirtualQubits import *
+import tqdm
+from numpy import pi,linspace,tensordot
+import scipy.optimize
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
 from scipy.optimize import root
-from numpy import pi,linspace,tensordot
+from scipy.interpolate import interp1d
 from scipy.sparse.linalg import eigsh
 from scipy.integrate import solve_ivp
 from scipy import interpolate
@@ -432,7 +440,6 @@ def PsiToRo(psi):
     return ro
 
 
-
 def LindbladLin(H, L):
     # H – гамильтониан
     # возарвщвет эффективную матрицу M ур. Л. для лианеризованной по строкам ro
@@ -453,3 +460,184 @@ def LindbladLin(H, L):
                OperLin(E, dagger(L[n])@L[n]))
         
     return M
+
+
+def SchrodingerParamEx(H, V, psiIn, psiTarg, timelist, force, psi_flag=True):
+    #решаем Шредингера с гамильтонианом H + V*F(t, a), где a – вектор параметров
+    # psiIn, psiTarg – волновые функции-столбцы
+
+    # прописывем матрички в модель
+    energies = []
+    Phi = []
+
+    energies.append(tf.constant(H, dtype=tf.complex128))
+    Phi.append(tf.constant(V, dtype=tf.complex128))
+    size = H.shape[0]
+ 
+    sys_args = {
+        'nQbt'     : 1,
+        'nLvl'     : [H.shape[0]],
+        'energies' : energies,
+        'N'        : [0],
+        'g'        : [],
+        't_dep'    : [], 
+    }
+
+    model = VirtualQubitSystem(sys_args)
+
+
+    # preparing for calculating time-dependent H
+
+    def calc_fluxoniumdriveH(phi):
+        Drive = np.asarray(phi)
+        H_td = Drive[:,tf.newaxis,tf.newaxis]*Phi[0][tf.newaxis]
+        return model.H[0][tf.newaxis, :, :] + H_td
+
+
+    model.set_calc_timedepH(calc_fluxoniumdriveH)
+
+
+    # вписываем волновые функции-столбцы
+
+    psiIn = tf.convert_to_tensor(psiIn, dtype=tf.complex128)
+    psiTarg = tf.convert_to_tensor(psiTarg, dtype=tf.complex128)
+
+    initstate = tf.stack([tf.reshape(psiIn, (size, 1))],
+                        axis = 2)
+
+    targetstate = tf.stack([tf.reshape(psiTarg, (size, 1))],
+                        axis = 2)
+
+
+    initstate = tf.reshape(initstate, (initstate.shape[0], initstate.shape[2]))
+    targetstate = tf.reshape(targetstate, (targetstate.shape[0], targetstate.shape[2]))
+
+    model.set_initstate(initstate)
+    model.set_targetstate(targetstate)
+
+    # сетка t
+    model.set_timelist(timelist)
+
+    """
+    запускаем дифурорешатель, который выдает:
+
+    1) psilist[A, B, C, D]
+        A - индекс вектора параметров сигнала
+        B – индекс узла сетки t
+        C – индекс проекции в волновой вектор-функции
+        D – индекс заданных initstate
+
+    2) fid[A, B, C]
+        A - индекс вектора параметров сигнала
+        B – индекс узла сетки t
+        C – индекс заданных initstate
+
+    """
+
+    if(psi_flag):
+        # решение с выводом полной волновой функции на сетке t (psilist)
+        _, psilist = model.scan_fidelitySE(force, psi_flag=psi_flag, progress_bar=True)
+        psilist = psilist.numpy()
+        return psilist
+
+    else:
+        # выдает только проекцию на заданное targetstate на сетке t (fid)
+        fid = model.scan_fidelitySE(calc_Phi3D, psi_flag=False, progress_bar=True)
+        fid = fid.numpy()
+        return fid
+
+
+def LindbladParamEx(H, V, L, psiIn, timelist, force):
+
+    # L - списорк операторов линдблада
+    energies = []
+    Phi = []
+
+    # строим эффективнуя матрицу дифура H + V*F(t) из уравнения Линдблада
+    size = H.shape[0]
+
+    # лианирезуем ro по строкам
+    if(L.ndim == 2):
+        Hl= tul.LindbladLin(H, np.asarray([L]))
+    else: 
+        Hl= tul.LindbladLin(H, L)
+
+    Vl = tul.LindbladLin(V, np.asarray([]))
+
+
+    # костыль перехода от Шредингера к обычной СЛДУ
+    Hl = 1j*Hl
+    Vl = 1j*Vl
+    psiTarg = np.zeros((size, 1), dtype=complex)
+
+    energies.append(tf.constant(Hl, dtype=tf.complex128))
+    Phi.append(tf.constant(Vl, dtype=tf.complex128))
+
+
+    sys_args = {
+        'nQbt'     : 1,
+        'nLvl'     : [Hl.shape[0]],
+        'energies' : energies,
+        'N'        : [0],
+        'g'        : [],
+        't_dep'    : [],
+    }
+
+    model = VirtualQubitSystem(sys_args)
+
+
+    # preparing for calculating time-dependent H
+
+    def calc_fluxoniumdriveH(phi):
+        Drive = np.asarray(phi)
+        H_td = Drive[:,tf.newaxis,tf.newaxis]*Phi[0][tf.newaxis]
+        return model.H[0][tf.newaxis, :, :] + H_td
+
+
+    model.set_calc_timedepH(calc_fluxoniumdriveH)
+
+
+    # преобразуем в матрицы плотности и сразу растягиваем их в строки
+    RoIn = tul.PsiToRo(psiIn)
+    roIn = RoIn.reshape(RoIn.shape[0]**2)
+    roIn = tf.convert_to_tensor(roIn, dtype=tf.complex128)
+
+    RoTarg = tul.PsiToRo(psiIn)
+    roTarg = RoTarg.reshape(RoTarg.shape[0]**2)
+    roTarg = tf.convert_to_tensor(roTarg, dtype=tf.complex128)
+
+    initstate = tf.stack([tf.reshape(roIn, (size**2, 1))],
+                        axis = 2)
+
+    targetstate = tf.stack([tf.reshape(roTarg, (size**2, 1))],
+                        axis = 2)
+
+
+    initstate = tf.reshape(initstate, (initstate.shape[0], initstate.shape[2]))
+    targetstate = tf.reshape(targetstate, (targetstate.shape[0], targetstate.shape[2]))
+
+    model.set_initstate(initstate)
+    model.set_targetstate(targetstate)
+
+    # сетка t
+    model.set_timelist(timelist)
+
+    """
+    запускаем дифурорешатель, который выдает:
+
+    1) psilist[A, B, C, D]
+        A - индекс вектора параметров сигнала
+        B – индекс узла сетки t
+        C – индекс вектор-функции
+        D – индекс заданных initstate
+    """
+
+    # решение с выводом полной волновой функции на сетке t (psilist)
+    _, rolist = model.scan_fidelitySE(force, psi_flag=True, progress_bar=True)
+    rolist = rolist.numpy()
+    rolistM = rolist.reshape(rolist.shape[0], 
+                             rolist.shape[1],
+                             size, size,
+                             rolist.shape[3])
+    
+    return rolistM
