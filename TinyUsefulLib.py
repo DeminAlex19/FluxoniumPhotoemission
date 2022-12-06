@@ -1,6 +1,4 @@
 import tensorflow as tf
-!pip install ipython-autotime
-%load_ext autotime
 !git clone https://github.com/SimakovIlya/VirtualQubits
 from VirtualQubits import *
 import tqdm
