@@ -1,5 +1,5 @@
 import tensorflow as tf
-!git clone https://github.com/SimakovIlya/VirtualQubits
+git clone https://github.com/SimakovIlya/VirtualQubits
 from VirtualQubits import *
 import tqdm
 from numpy import pi,linspace,tensordot
