@@ -555,11 +555,11 @@ def LindbladParamEx(H, V, L, psiIn, timelist, force):
 
     # лианирезуем ro по строкам
     if(L.ndim == 2):
-        Hl= tul.LindbladLin(H, np.asarray([L]))
+        Hl= LindbladLin(H, np.asarray([L]))
     else: 
-        Hl= tul.LindbladLin(H, L)
+        Hl= LindbladLin(H, L)
 
-    Vl = tul.LindbladLin(V, np.asarray([]))
+    Vl = LindbladLin(V, np.asarray([]))
 
 
     # костыль перехода от Шредингера к обычной СЛДУ
@@ -595,11 +595,11 @@ def LindbladParamEx(H, V, L, psiIn, timelist, force):
 
 
     # преобразуем в матрицы плотности и сразу растягиваем их в строки
-    RoIn = tul.PsiToRo(psiIn)
+    RoIn = PsiToRo(psiIn)
     roIn = RoIn.reshape(RoIn.shape[0]**2)
     roIn = tf.convert_to_tensor(roIn, dtype=tf.complex128)
 
-    RoTarg = tul.PsiToRo(psiIn)
+    RoTarg = PsiToRo(psiIn)
     roTarg = RoTarg.reshape(RoTarg.shape[0]**2)
     roTarg = tf.convert_to_tensor(roTarg, dtype=tf.complex128)
 
