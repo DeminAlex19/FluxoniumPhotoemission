@@ -1,5 +1,5 @@
 import tensorflow as tf
-from VirtualQubitSystem import VirtualQubitSystem
+from VirtualQubitSystem import *
 import tqdm
 from numpy import pi,linspace,tensordot
 import scipy.optimize
